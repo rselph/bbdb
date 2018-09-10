@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -29,7 +30,20 @@ func newDB(fname string) (c *db, err error) {
 		return
 	}
 
+	err = c.checkAndOpen()
+	if err != nil {
+		c = nil
+		return
+	}
+
 	return
+}
+
+func (c *db) close() {
+	c.db.Exec(`
+UPDATE meta SET lastclose = datetime('now');
+`)
+	c.db.Close()
 }
 
 func (c *db) load() (err error) {
@@ -43,7 +57,7 @@ SELECT count(*) from sqlite_master where type = "table" and name = "meta";
 	}
 	if metaCount == 0 {
 		// There's no meta table.  Assume blank database and initialize it.
-		c.createTables()
+		err = c.createTables()
 	}
 
 	return
@@ -100,7 +114,7 @@ CREATE INDEX IF NOT EXISTS failure_index ON drive_stats (failure);
 		return
 	}
 
-	for i := 1; i < 256 ; i++ {
+	for i := 1; i < 256; i++ {
 		_, err = tx.Exec(fmt.Sprintf(`
 	    	ALTER TABLE drive_stats ADD COLUMN smart_%d_raw INTEGER;
     		ALTER TABLE drive_stats ADD COLUMN smart_%d_normalized INTEGER;
@@ -150,6 +164,26 @@ CREATE VIEW failure_rates AS
 	if err != nil {
 		return
 	}
+
+	return
+}
+
+func (c *db) checkAndOpen() (err error) {
+	var vers int
+	row := c.db.QueryRow(`
+SELECT schema_version from meta;
+`)
+	err = row.Scan(&vers)
+	if err != nil {
+		return
+	}
+	if vers > schemaVersion {
+		err = errors.New("Database schema version newer than this code.")
+	}
+
+	_, err = c.db.Exec(`
+UPDATE meta SET lastopen = datetime('now');
+`)
 
 	return
 }
