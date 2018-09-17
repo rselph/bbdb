@@ -107,8 +107,6 @@ CREATE TABLE drive_stats (
     failure INTEGER (1) NOT NULL,
     PRIMARY KEY (date, model, serial_number)
     );
-CREATE INDEX IF NOT EXISTS model_index ON drive_stats (model);
-CREATE INDEX IF NOT EXISTS failure_index ON drive_stats (failure);
 `)
 	if err != nil {
 		return
@@ -124,7 +122,34 @@ CREATE INDEX IF NOT EXISTS failure_index ON drive_stats (failure);
 		}
 	}
 
-	_, err = tx.Exec(`
+	return
+}
+
+func (c *db) checkAndOpen() (err error) {
+	var vers int
+	row := c.db.QueryRow(`
+SELECT schema_version from meta;
+`)
+	err = row.Scan(&vers)
+	if err != nil {
+		return
+	}
+	if vers > schemaVersion {
+		err = errors.New("Database schema version newer than this code.")
+	}
+
+	_, err = c.db.Exec(`
+UPDATE meta SET lastopen = datetime('now');
+`)
+
+	return
+}
+
+func (c *db) finishLoad() (err error) {
+	_, err = c.db.Exec(`
+CREATE INDEX model_index ON drive_stats (model);
+CREATE INDEX failure_index ON drive_stats (failure);
+
 --
 -- Create a view that has the number of drive days for each
 -- model, which is simply the number of rows in drive_stats
@@ -159,31 +184,6 @@ CREATE VIEW failure_rates AS
     FROM drive_days, failures
     WHERE drive_days.model = failures.model
     ORDER BY model;
-
 `)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-func (c *db) checkAndOpen() (err error) {
-	var vers int
-	row := c.db.QueryRow(`
-SELECT schema_version from meta;
-`)
-	err = row.Scan(&vers)
-	if err != nil {
-		return
-	}
-	if vers > schemaVersion {
-		err = errors.New("Database schema version newer than this code.")
-	}
-
-	_, err = c.db.Exec(`
-UPDATE meta SET lastopen = datetime('now');
-`)
-
 	return
 }

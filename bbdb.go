@@ -45,6 +45,11 @@ func main() {
 	for _, dir := range flag.Args() {
 		readOneDir(dir)
 	}
+
+	err = driveDB.finishLoad()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func readOneDir(dir string) {
