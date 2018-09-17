@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -22,7 +23,7 @@ func main() {
 	var err error
 
 	flag.StringVar(&dbFile, "db", defaultDBFile, "Database file")
-	flag.BoolVar(&wipe, "delete", false, "Delete old database before starting")
+	flag.BoolVar(&wipe, "clean", false, "Delete old database before starting")
 	flag.Parse()
 
 	if wipe {
@@ -48,9 +49,14 @@ func main() {
 
 func readOneDir(dir string) {
 	filepath.Walk(dir, func(path string, info os.FileInfo, inErr error) (outErr error) {
-		if info != nil &&
-			!info.IsDir() &&
-			strings.HasSuffix(strings.ToLower(info.Name()), ".csv") {
+		switch {
+		case info == nil:
+			return
+
+		case info.IsDir() && info.Name() == "__MACOSX":
+			return filepath.SkipDir
+
+		case !info.IsDir() && strings.HasSuffix(strings.ToLower(info.Name()), ".csv"):
 			err := readOneFile(path)
 			if err != nil {
 				log.Println(err)
@@ -67,6 +73,21 @@ func readOneFile(fname string) (err error) {
 		return
 	}
 	defer s.Close()
+
+	inserter, err := driveDB.prepare(s.columns)
+	var row []string
+	for err == nil {
+		row, err = s.Read()
+		if err == nil {
+			err = inserter.putRow(row)
+		}
+	}
+
+	if err == io.EOF {
+		err = inserter.commit()
+	} else {
+		inserter.rollback()
+	}
 
 	return
 }
