@@ -27,13 +27,9 @@ func main() {
 	flag.Parse()
 
 	if wipe {
-		_, err := os.Stat(dbFile)
-		if err == nil {
-			err = os.Remove(dbFile)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
+		removeFile(dbFile)
+		removeFile(dbFile + "-journal")
+		removeFile(dbFile + "-wal")
 	}
 
 	driveDB, err = newDB(dbFile)
@@ -49,6 +45,16 @@ func main() {
 	err = driveDB.finishLoad()
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func removeFile(fname string) {
+	_, err := os.Stat(fname)
+	if err == nil {
+		err = os.Remove(fname)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
