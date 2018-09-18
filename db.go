@@ -7,7 +7,7 @@ import (
 
 type inserter struct {
 	tx     *sql.Tx
-	query  string
+	query  *sql.Stmt
 	params []interface{}
 }
 
@@ -21,8 +21,12 @@ func (c *db) prepare(columns []string) (ins *inserter, err error) {
 	params := make([]interface{}, len(columns))
 
 	tx, err := c.db.Begin()
+	if err != nil {
+		return
+	}
+	prepared, err := tx.Prepare(query)
 	if err == nil {
-		ins = &inserter{tx: tx, query: query, params: params}
+		ins = &inserter{tx: tx, query: prepared, params: params}
 	}
 	return
 }
@@ -36,15 +40,16 @@ func (ins *inserter) putRow(values []string) (err error) {
 		}
 	}
 
-	//log.Println(ins.params[0:3])
-	_, err = ins.tx.Exec(ins.query, ins.params...)
+	_, err = ins.query.Exec(ins.params...)
 	return
 }
 
 func (ins *inserter) commit() error {
+	ins.query.Close()
 	return ins.tx.Commit()
 }
 
 func (ins *inserter) rollback() error {
+	ins.query.Close()
 	return ins.tx.Rollback()
 }
