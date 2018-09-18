@@ -2,47 +2,38 @@ package main
 
 import (
 	"encoding/csv"
-	"io"
+	"errors"
 	"os"
 )
 
 type smartFile struct {
-	f       io.Closer
-	r       *csv.Reader
 	columns []string
+	rows    [][]string
 }
 
-func openFile(fname string) (s *smartFile, err error) {
+func readFile(fname string) (s *smartFile, err error) {
 	r, err := os.Open(fname)
 	if err != nil {
 		return
 	}
+	defer r.Close()
 
-	s = &smartFile{}
-	s.f = r
-	s.r = csv.NewReader(r)
-	s.r.ReuseRecord = true
-
-	tmp, err := s.r.Read()
+	csvReader := csv.NewReader(r)
+	var all [][]string
+	all, err = csvReader.ReadAll()
 	if err != nil {
-		s.f.Close()
 		return
 	}
 
-	s.columns = make([]string, len(tmp))
-	copy(s.columns, tmp)
-	return
-}
-
-func (s *smartFile) Read() (row []string, err error) {
-	row, err = s.r.Read()
-	if row != nil {
-		err = nil
+	if len(all) < 2 {
+		err = errors.New("Not enough rows")
+	} else {
+		s = &smartFile{columns: all[0], rows: all[1:]}
 	}
 
 	return
 }
 
-func (s *smartFile) Close() {
-	s.f.Close()
+func (s *smartFile) rowCount() int {
+	return len(s.rows)
 }

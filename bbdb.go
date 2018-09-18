@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -79,25 +78,23 @@ func readOneDir(dir string) {
 
 func readOneFile(fname string) (err error) {
 	log.Println(fname)
-	s, err := openFile(fname)
+	s, err := readFile(fname)
 	if err != nil {
 		return
 	}
-	defer s.Close()
 
-	inserter, err := driveDB.prepare(s.columns)
-	var row []string
-	for err == nil {
-		row, err = s.Read()
-		if err == nil {
-			err = inserter.putRow(row)
+	ins, err := driveDB.prepare(s.columns)
+	for _, row := range s.rows {
+		err = ins.putRow(row)
+		if err != nil {
+			break
 		}
 	}
 
-	if err == io.EOF {
-		err = inserter.commit()
+	if err == nil {
+		err = ins.commit()
 	} else {
-		inserter.rollback()
+		ins.rollback()
 	}
 
 	return
