@@ -135,7 +135,8 @@ SELECT schema_version from meta;
 		return
 	}
 	if vers > schemaVersion {
-		err = errors.New("Database schema version newer than this code.")
+		err = errors.New("Database schema version too new.")
+		return
 	}
 
 	_, err = c.db.Exec(`
