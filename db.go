@@ -44,12 +44,17 @@ func (ins *inserter) putRow(values []string) (err error) {
 	return
 }
 
-func (ins *inserter) commit() error {
-	ins.query.Close()
+func (ins *inserter) commit() (err error) {
+	err = ins.query.Close()
+	if err != nil {
+		_ = ins.tx.Rollback()
+		return
+	}
+
 	return ins.tx.Commit()
 }
 
 func (ins *inserter) rollback() error {
-	ins.query.Close()
+	_ = ins.query.Close()
 	return ins.tx.Rollback()
 }

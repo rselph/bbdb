@@ -58,7 +58,7 @@ func removeFile(fname string) {
 }
 
 func readOneDir(dir string) {
-	filepath.Walk(dir, func(path string, info os.FileInfo, inErr error) (outErr error) {
+	_ = filepath.Walk(dir, func(path string, info os.FileInfo, inErr error) (outErr error) {
 		switch {
 		case info == nil:
 			return
@@ -94,7 +94,7 @@ func readOneFile(fname string) (err error) {
 	if err == nil {
 		err = ins.commit()
 	} else {
-		ins.rollback()
+		_ = ins.rollback()
 	}
 
 	return
