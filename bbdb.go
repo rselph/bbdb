@@ -1,7 +1,9 @@
 package main
 
 import (
+	"archive/zip"
 	"flag"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -71,6 +73,12 @@ func readOneDir(dir string) {
 			if err != nil {
 				log.Println(err)
 			}
+
+		case !info.IsDir() && strings.HasSuffix(strings.ToLower(info.Name()), ".zip"):
+			err := readZipFile(path)
+			if err != nil {
+				log.Println(err)
+			}
 		}
 		return
 	})
@@ -83,6 +91,12 @@ func readOneFile(fname string) (err error) {
 		return
 	}
 
+	err = insertSmartFile(s)
+
+	return
+}
+
+func insertSmartFile(s *smartFile) (err error) {
 	ins, err := driveDB.prepare(s.columns)
 	for _, row := range s.rows {
 		err = ins.putRow(row)
@@ -95,6 +109,45 @@ func readOneFile(fname string) (err error) {
 		err = ins.commit()
 	} else {
 		_ = ins.rollback()
+	}
+
+	return
+}
+
+func readZipFile(fname string) (err error) {
+	r, err := zip.OpenReader(fname)
+	if err != nil {
+		return
+	}
+	defer r.Close()
+
+	for _, f := range r.File {
+		if strings.HasPrefix(f.Name, "__MACOSX") ||
+			!strings.HasSuffix(strings.ToLower(f.Name), ".csv") {
+			continue
+		}
+		log.Println(f.Name)
+
+		var data io.ReadCloser
+		data, err = f.Open()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		var s *smartFile
+		s, err = readReader(data)
+		data.Close()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		err = insertSmartFile(s)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
 	}
 
 	return

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/csv"
 	"errors"
+	"io"
 	"os"
 )
 
@@ -18,6 +19,14 @@ func readFile(fname string) (s *smartFile, err error) {
 	}
 	defer r.Close()
 
+	return readReader(r)
+}
+
+func (s *smartFile) rowCount() int {
+	return len(s.rows)
+}
+
+func readReader(r io.Reader) (s *smartFile, err error) {
 	csvReader := csv.NewReader(r)
 	var all [][]string
 	all, err = csvReader.ReadAll()
@@ -32,8 +41,4 @@ func readFile(fname string) (s *smartFile, err error) {
 	}
 
 	return
-}
-
-func (s *smartFile) rowCount() int {
-	return len(s.rows)
 }
