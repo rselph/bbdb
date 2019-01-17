@@ -40,10 +40,10 @@ func newDB(fname string) (c *db, err error) {
 }
 
 func (c *db) close() {
-	c.db.Exec(`
+	_, _ = c.db.Exec(`
 UPDATE meta SET lastclose = datetime('now');
 `)
-	c.db.Close()
+	_ = c.db.Close()
 }
 
 func (c *db) load() (err error) {
@@ -73,7 +73,7 @@ func (c *db) createTables() (err error) {
 		if err == nil {
 			err = tx.Commit()
 		} else {
-			tx.Rollback()
+			_ = tx.Rollback()
 		}
 	}()
 
