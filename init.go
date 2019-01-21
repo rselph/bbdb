@@ -18,9 +18,9 @@ type db struct {
 	db *sql.DB
 }
 
-func newDB(fname string) (c *db, err error) {
+func newDB(driver, fname string) (c *db, err error) {
 	c = &db{}
-	c.db, err = sql.Open("sqlite3", fname)
+	c.db, err = sql.Open(driver, fname)
 	if err != nil {
 		c = nil
 		return
@@ -51,13 +51,10 @@ UPDATE meta SET lastclose = datetime('now');
 func (c *db) load() (err error) {
 	var metaCount int
 	row := c.db.QueryRow(`
-SELECT count(*) from sqlite_master where type = "table" and name = "meta";
+SELECT count(*) from meta;
 `)
 	err = row.Scan(&metaCount)
-	if err != nil {
-		return
-	}
-	if metaCount == 0 {
+	if err != nil || metaCount != 1 {
 		// There's no meta table.  Assume blank database and initialize it.
 		err = c.createTables()
 	}
@@ -82,7 +79,7 @@ func (c *db) createTables() (err error) {
 	_, err = tx.Exec(`
 CREATE TABLE meta
 (
-    "unique" int PRIMARY KEY DEFAULT 1,
+    unique_ordinal int PRIMARY KEY DEFAULT 1,
     lastopen timestamp,
     lastclose timestamp,
     schema_version int

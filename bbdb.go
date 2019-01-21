@@ -2,7 +2,9 @@ package main
 
 import (
 	"archive/zip"
+	"database/sql"
 	"flag"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -11,29 +13,36 @@ import (
 )
 
 const (
-	defaultDBFile = "drive_stats.db"
+	defaultDBFile   = "drive_stats.db"
+	defaultDBDriver = "sqlite3"
 )
 
 var (
-	dbFile  string
-	wipe    bool
+	dbFile   string
+	dbDriver string
+	//wipe     bool
 	driveDB *db
 )
+
+func dbTypesString() string {
+	return fmt.Sprintf("Database type (%s)", strings.Join(sql.Drivers(), ", "))
+}
 
 func main() {
 	var err error
 
 	flag.StringVar(&dbFile, "db", defaultDBFile, "Database file")
-	flag.BoolVar(&wipe, "clean", false, "Delete old database before starting")
+	flag.StringVar(&dbDriver, "driver", defaultDBDriver, dbTypesString())
+	//flag.BoolVar(&wipe, "clean", false, "Delete old database before starting")
 	flag.Parse()
 
-	if wipe {
-		removeFile(dbFile)
-		removeFile(dbFile + "-journal")
-		removeFile(dbFile + "-wal")
-	}
+	//if wipe {
+	//	removeFile(dbFile)
+	//	removeFile(dbFile + "-journal")
+	//	removeFile(dbFile + "-wal")
+	//}
 
-	driveDB, err = newDB(dbFile)
+	driveDB, err = newDB(dbDriver, dbFile)
 	if err != nil {
 		log.Fatal(err)
 	}
