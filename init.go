@@ -4,10 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -17,7 +15,8 @@ const (
 )
 
 type db struct {
-	db *sql.DB
+	db        *sql.DB
+	positions []string
 }
 
 type execer interface {
@@ -26,6 +25,11 @@ type execer interface {
 
 func newDB(driver, fname string, wipe bool) (c *db, err error) {
 	c = &db{}
+	c.positions = make([]string, 1024)
+	for i := range c.positions {
+		c.positions[i] = fmt.Sprintf("$%d", i)
+	}
+
 	c.db, err = sql.Open(driver, fname)
 	if err != nil {
 		c = nil
@@ -62,16 +66,14 @@ func newDB(driver, fname string, wipe bool) (c *db, err error) {
 }
 
 func (c *db) close() {
-	_, _ = c.db.Exec(`UPDATE meta SET lastclose = ?;`, time.Now())
+	_, _ = c.db.Exec(`UPDATE meta SET lastclose = $1;`, time.Now())
 	_ = c.db.Close()
 }
 
 func (c *db) setFlags(driver string) (err error) {
 	switch driver {
 	case "sqlite3":
-		//		_, err = c.db.Exec(`
-		//PRAGMA journal_mode=WAL;
-		//`)
+		_, err = c.db.Exec(`PRAGMA journal_mode=WAL;`)
 	}
 	return debugErr(err)
 }
@@ -118,7 +120,7 @@ CREATE TABLE meta
 	}
 
 	_, err = tx.Exec(`
-insert into meta (schema_version) VALUES (?);
+insert into meta (schema_version) VALUES ($1);
 `,
 		schemaVersion)
 	if err != nil {
@@ -140,15 +142,15 @@ CREATE TABLE drive_stats (
 	}
 
 	for i := 1; i < 256; i++ {
-		err = doMany(tx, fmt.Sprintf(`
-	    	ALTER TABLE drive_stats ADD COLUMN smart_%d_raw SMALLINT NULL;
-    		ALTER TABLE drive_stats ADD COLUMN smart_%d_normalized SMALLINT NULL;`, i, i))
+		_, err = tx.Exec(fmt.Sprintf(`
+	    	ALTER TABLE drive_stats ADD COLUMN smart_%d_raw BIGINT NULL;
+    		ALTER TABLE drive_stats ADD COLUMN smart_%d_normalized BIGINT NULL;`, i, i))
 		if err != nil {
 			return debugErr(err)
 		}
 	}
 
-	err = doMany(tx, `
+	_, err = tx.Exec(`
 CREATE INDEX model_index ON drive_stats (model);
 CREATE INDEX failure_index ON drive_stats (failure);
 `)
@@ -173,13 +175,13 @@ SELECT schema_version from meta;
 		return debugErr(err)
 	}
 
-	_, err = c.db.Exec(`UPDATE meta SET lastopen = ?;`, time.Now())
+	_, err = c.db.Exec(`UPDATE meta SET lastopen = $1;`, time.Now())
 
 	return debugErr(err)
 }
 
 func (c *db) finishLoad() (err error) {
-	err = doMany(c.db, `
+	_, err = c.db.Exec(`
 --
 -- Create a view that has the number of drive days for each
 -- model, which is simply the number of rows in drive_stats
@@ -219,7 +221,7 @@ CREATE VIEW failure_rates AS
 }
 
 func (c *db) dropAll() (err error) {
-	err = doMany(c.db, `
+	_, err = c.db.Exec(`
 drop table if exists meta;
 drop table if exists drive_stats;
 drop view if exists drive_days;
@@ -227,18 +229,4 @@ drop view if exists failures;
 drop view if exists failure_rates;
 `)
 	return debugErr(err)
-}
-
-func doMany(e execer, queries string) error {
-	for _, query := range strings.Split(queries, ";") {
-		query = strings.TrimSpace(query)
-		if query == "" {
-			continue
-		}
-		_, err := e.Exec(query)
-		if err != nil {
-			return debugErr(err)
-		}
-	}
-	return nil
 }

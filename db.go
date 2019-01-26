@@ -15,8 +15,8 @@ func (c *db) prepare(columns []string) (ins *inserter, err error) {
 	query := `insert into drive_stats (`
 	query += strings.Join(columns, ", ")
 	query += `) values (`
-	query += strings.Repeat(`?, `, len(columns)-1)
-	query += `?)`
+	query += strings.Join(c.positions[1:len(columns)+1], ", ")
+	query += `)`
 
 	params := make([]interface{}, len(columns))
 
