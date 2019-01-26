@@ -20,8 +20,9 @@ const (
 var (
 	dbFile   string
 	dbDriver string
-	//wipe     bool
-	driveDB *db
+	wipe     bool
+	driveDB  *db
+	debug    bool
 )
 
 func dbTypesString() string {
@@ -33,16 +34,11 @@ func main() {
 
 	flag.StringVar(&dbFile, "db", defaultDBFile, "Database file")
 	flag.StringVar(&dbDriver, "driver", defaultDBDriver, dbTypesString())
-	//flag.BoolVar(&wipe, "clean", false, "Delete old database before starting")
+	flag.BoolVar(&wipe, "clean", false, "Delete old database before starting")
+	flag.BoolVar(&debug, "d", false, "Print debug output")
 	flag.Parse()
 
-	//if wipe {
-	//	removeFile(dbFile)
-	//	removeFile(dbFile + "-journal")
-	//	removeFile(dbFile + "-wal")
-	//}
-
-	driveDB, err = newDB(dbDriver, dbFile)
+	driveDB, err = newDB(dbDriver, dbFile, wipe)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -160,4 +156,12 @@ func readZipFile(fname string) (err error) {
 	}
 
 	return
+}
+
+func debugErr(err error) error {
+	if debug && err != nil {
+		panic(err)
+	}
+
+	return err
 }

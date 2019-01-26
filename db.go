@@ -22,17 +22,18 @@ func (c *db) prepare(columns []string) (ins *inserter, err error) {
 
 	tx, err := c.db.Begin()
 	if err != nil {
-		return
+		return ins, debugErr(err)
 	}
 	prepared, err := tx.Prepare(query)
 	if err == nil {
 		ins = &inserter{tx: tx, query: prepared, params: params}
 	}
-	return
+	return ins, debugErr(err)
 }
 
 func (ins *inserter) putRow(values []string) (err error) {
 	for i := range values {
+		values[i] = strings.TrimSpace(values[i])
 		if values[i] != "" {
 			ins.params[i] = values[i]
 		} else {
@@ -41,20 +42,20 @@ func (ins *inserter) putRow(values []string) (err error) {
 	}
 
 	_, err = ins.query.Exec(ins.params...)
-	return
+	return debugErr(err)
 }
 
 func (ins *inserter) commit() (err error) {
 	err = ins.query.Close()
 	if err != nil {
 		_ = ins.tx.Rollback()
-		return
+		return debugErr(err)
 	}
 
-	return ins.tx.Commit()
+	return debugErr(ins.tx.Commit())
 }
 
 func (ins *inserter) rollback() error {
 	_ = ins.query.Close()
-	return ins.tx.Rollback()
+	return debugErr(ins.tx.Rollback())
 }
