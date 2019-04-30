@@ -65,7 +65,7 @@ func removeFile(fname string) {
 }
 
 func readOneDir(dir string) {
-	_ = filepath.Walk(dir, func(path string, info os.FileInfo, inErr error) (outErr error) {
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, inErr error) (outErr error) {
 		switch {
 		case info == nil:
 			return
@@ -87,6 +87,9 @@ func readOneDir(dir string) {
 		}
 		return
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func readOneFile(fname string) (err error) {
@@ -103,6 +106,9 @@ func readOneFile(fname string) (err error) {
 
 func insertSmartFile(s *smartFile) (err error) {
 	ins, err := driveDB.prepare(s.columns)
+	if err != nil {
+		log.Fatal(err)
+	}
 	for _, row := range s.rows {
 		err = ins.putRow(row)
 		if err != nil {
