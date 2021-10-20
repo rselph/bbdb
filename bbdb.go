@@ -54,16 +54,6 @@ func main() {
 	}
 }
 
-func removeFile(fname string) {
-	_, err := os.Stat(fname)
-	if err == nil {
-		err = os.Remove(fname)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-}
-
 func readOneDir(dir string) {
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, inErr error) (outErr error) {
 		switch {
