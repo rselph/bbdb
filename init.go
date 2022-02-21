@@ -187,7 +187,7 @@ func (c *db) finishLoad() (err error) {
 -- model, which is simply the number of rows in drive_stats
 -- for that model.
 --
-CREATE VIEW drive_days AS 
+CREATE VIEW IF NOT EXISTS drive_days AS 
     SELECT model, count(*) AS drive_days 
     FROM drive_stats 
     GROUP BY model;
@@ -195,7 +195,7 @@ CREATE VIEW drive_days AS
 --
 -- Create a view that has the number of failures for each model.
 --
-CREATE VIEW failures AS
+CREATE VIEW IF NOT EXISTS failures AS
     SELECT model, count(*) AS failures
     FROM drive_stats
     WHERE failure = 1
@@ -208,7 +208,7 @@ CREATE VIEW failures AS
 -- of failures divided by the number of drive years.  The result
 -- is multiplied by 100 to get a percentage.
 --
-CREATE VIEW failure_rates AS
+CREATE VIEW IF NOT EXISTS failure_rates AS
     SELECT drive_days.model AS model,
            drive_days.drive_days AS drive_days,
            failures.failures AS failures, 
