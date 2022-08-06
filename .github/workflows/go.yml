@@ -24,7 +24,7 @@ jobs:
         tar czf bbdb_linux.tgz bbdb_linux
 
     - name: Package and Release
-      uses: ncipollo/release-action@1.10.0
+      uses: ncipollo/release-action@v1.10.0
       with:
         token: ${{ secrets.GITHUB_RELEASE_TOKEN }}
         artifacts: bbdb_linux.tgz
