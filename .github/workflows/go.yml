@@ -2,13 +2,11 @@ name: Go
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    tags: [ v* ]
 
 jobs:
 
-  build:
+  build-linux:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -19,7 +17,24 @@ jobs:
         go-version: 1.18
 
     - name: Build
-      run: go build -v ./...
+      run: |
+        go build -v ./... && \
+        mkdir bbdb_linux && \
+        cp bbdb download.sh bbdb_linux && \
+        tar czf bbdb_linux.tgz bbdb_linux
+
+    - name: Package and Release
+      uses: ncipollo/release-action@1.10.0
+      with:
+        token: ${{ secrets.GITHUB_RELEASE_TOKEN }}
+        artifacts: bbdb_linux.tgz
+        allowUpdates: true
+        artifactErrorsFailBuild: true
+        generateReleaseNotes: true
+        omitBody: true
+        omitDraftDuringUpdate: true
+        omitNameDuringUpdate: true
+        omitPrereleaseDuringUpdate: true
 
 #    - name: Test
 #      run: go test -v ./...
