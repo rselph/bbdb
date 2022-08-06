@@ -18,15 +18,15 @@ jobs:
 
     - name: Build
       run: |
-        go build -v ./... && \
-        mkdir bbdb_linux && \
-        cp bbdb download.sh bbdb_linux && \
+        go build -v ./... || exit 1
+        mkdir bbdb_linux
+        cp bbdb download.sh bbdb_linux
         tar czf bbdb_linux.tgz bbdb_linux
 
     - name: Package and Release
       uses: ncipollo/release-action@v1.10.0
       with:
-        token: ${{ secrets.GITHUB_RELEASE_TOKEN }}
+        token: ${{ secrets.RELEASE_TOKEN }}
         artifacts: bbdb_linux.tgz
         allowUpdates: true
         artifactErrorsFailBuild: true
@@ -36,37 +36,28 @@ jobs:
         omitNameDuringUpdate: true
         omitPrereleaseDuringUpdate: true
 
-#    - name: Test
-#      run: go test -v ./...
+#  build-mac:
+#    runs-on: macos-latest
+#    steps:
+#      - uses: actions/checkout@v3
+#
+#      - name: Set up Go
+#        uses: actions/setup-go@v3
+#        with:
+#          go-version: 1.18
+#
+#      - name: Build
+#        run: go build -v ./...
 
-  build-mac:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.18
-
-      - name: Build
-        run: go build -v ./...
-
-    #    - name: Test
-    #      run: go test -v ./...
-
-  build-win:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.18
-
-      - name: Build
-        run: go build -v ./...
-
-    #    - name: Test
-    #      run: go test -v ./...
+#  build-win:
+#    runs-on: windows-latest
+#    steps:
+#      - uses: actions/checkout@v3
+#
+#      - name: Set up Go
+#        uses: actions/setup-go@v3
+#        with:
+#          go-version: 1.18
+#
+#      - name: Build
+#        run: go build -v ./...
