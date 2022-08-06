@@ -19,15 +19,15 @@ jobs:
     - name: Build
       run: |
         go build -v ./... || exit 1
-        mkdir bbdb_linux
-        cp bbdb download.sh bbdb_linux
-        tar czf bbdb_linux.tgz bbdb_linux
+        mkdir bbdb-linux
+        cp bbdb download.sh bbdb-linux
+        tar czf bbdb-linux.tgz bbdb-linux
 
     - name: Package and Release
       uses: ncipollo/release-action@v1.10.0
       with:
         token: ${{ secrets.RELEASE_TOKEN }}
-        artifacts: bbdb_linux.tgz
+        artifacts: bbdb-linux.tgz
         allowUpdates: true
         artifactErrorsFailBuild: true
         generateReleaseNotes: true
@@ -36,28 +36,32 @@ jobs:
         omitNameDuringUpdate: true
         omitPrereleaseDuringUpdate: true
 
-#  build-mac:
-#    runs-on: macos-latest
-#    steps:
-#      - uses: actions/checkout@v3
-#
-#      - name: Set up Go
-#        uses: actions/setup-go@v3
-#        with:
-#          go-version: 1.18
-#
-#      - name: Build
-#        run: go build -v ./...
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
 
-#  build-win:
-#    runs-on: windows-latest
-#    steps:
-#      - uses: actions/checkout@v3
-#
-#      - name: Set up Go
-#        uses: actions/setup-go@v3
-#        with:
-#          go-version: 1.18
-#
-#      - name: Build
-#        run: go build -v ./...
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+
+      - name: Build
+        run: |
+          go build -v ./... || exit 1
+          mkdir bbdb-mac
+          cp bbdb download.sh bbdb-mac
+          tar czf bbdb-mac.tgz bbdb-mac
+
+      - name: Package and Release
+        uses: ncipollo/release-action@v1.10.0
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+          artifacts: bbdb-mac.tgz
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+          generateReleaseNotes: true
+          omitBody: true
+          omitDraftDuringUpdate: true
+          omitNameDuringUpdate: true
+          omitPrereleaseDuringUpdate: true
