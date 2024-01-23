@@ -12,7 +12,7 @@ This code has a few advantages over the code provided by BackBlaze:
 
 There's also a little shell script for downloading the stats.  This may stop working if BackBlaze changes the format of their [download page](https://www.backblaze.com/b2/hard-drive-test-data.html).
 
-To use bbdb, first run `download.sh` in an empty directory, then extract the contents of all the zip files.  This will give you a bunch of directories with a bunch of `.csv` filies containing all the data.  Then run `bbdb <data_dir>`.  This will recursively search for data files under `data_dir`, and add all the data to `drive_stats.db`, which is a SQLite3 database.  It also creates a SQL view (based on BackBlaze's own sample code) to give you a reliability stat for all the drive models in the database.
+To use bbdb, first run `download.sh` in an empty directory.  This will give you a bunch of zip files containing all the data.  Then run `bbdb <data_dir>`.  This will recursively search for data files under `data_dir`, and add all the data to `drive_stats.db`, which is a SQLite3 database.  It also creates a SQL view (based on BackBlaze's own sample code) to give you a reliability stat for all the drive models in the database.
 
 After that, you're pretty much on your own to come up with insights from the data. :)
 
