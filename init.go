@@ -19,10 +19,6 @@ type db struct {
 	positions []string
 }
 
-type execer interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-}
-
 func newDB(driver, fname string, wipe bool) (c *db, err error) {
 	c = &db{}
 	c.positions = make([]string, 1024)
@@ -171,7 +167,7 @@ SELECT schema_version from meta;
 		return debugErr(err)
 	}
 	if vers > schemaVersion {
-		err = errors.New("Database schema version too new.")
+		err = errors.New("database schema version too new")
 		return debugErr(err)
 	}
 
