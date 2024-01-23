@@ -130,6 +130,12 @@ CREATE TABLE drive_stats (
     model VARCHAR(128) NOT NULL,
     capacity_bytes BIGINT NOT NULL,
     failure SMALLINT NOT NULL,
+	datacenter VARCHAR(128) NULL,
+	cluster_id VARCHAR(128) NULL,
+	vault_id VARCHAR(128) NULL,
+	pod_id VARCHAR(128) NULL,
+	pod_slot_num VARCHAR(128) NULL,
+	is_legacy_format SMALLINT NULL,
     PRIMARY KEY (date, model, serial_number)
     );
 `)
