@@ -12,7 +12,7 @@ type inserter struct {
 }
 
 func (c *db) prepare(columns []string) (ins *inserter, err error) {
-	query := `insert into drive_stats (`
+	query := `insert or ignore into drive_stats (`
 	query += strings.Join(columns, ", ")
 	query += `) values (`
 	query += strings.Join(c.positions[1:len(columns)+1], ", ")
