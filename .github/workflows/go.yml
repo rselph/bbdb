@@ -9,10 +9,10 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v5
       with:
         go-version: 1.19
 
@@ -24,7 +24,7 @@ jobs:
         tar czf bbdb-linux.tgz bbdb-linux
 
     - name: Package and Release
-      uses: ncipollo/release-action@v1.10.0
+      uses: ncipollo/release-action@v1.14.0
       with:
         token: ${{ secrets.RELEASE_TOKEN }}
         artifacts: bbdb-linux.tgz
@@ -39,10 +39,10 @@ jobs:
   build-mac:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: 1.19
 
@@ -54,7 +54,7 @@ jobs:
           tar czf bbdb-mac.tgz bbdb-mac
 
       - name: Package and Release
-        uses: ncipollo/release-action@v1.10.0
+        uses: ncipollo/release-action@v1.14.0
         with:
           token: ${{ secrets.RELEASE_TOKEN }}
           artifacts: bbdb-mac.tgz
